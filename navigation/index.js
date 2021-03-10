@@ -7,7 +7,7 @@ function RootNavigation() {
   return (
     
     <NavigationContainer>
-      <SafeAreaView style={{flex:1 }}>
+      <SafeAreaView style={{flex:1}}>
         <BottomBarNav />
       </SafeAreaView>
     </NavigationContainer>
