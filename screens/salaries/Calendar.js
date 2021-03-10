@@ -12,17 +12,17 @@
 // export default Calendar
 
 // const styles = StyleSheet.create({})
-import React from 'react';
-import {Text, View} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {Text, View, Alert, Button} from 'react-native';
 import {CalendarList} from 'react-native-calendars';
-
-
 import {LocaleConfig} from 'react-native-calendars';
+import { Ionicons, AntDesign  } from '@expo/vector-icons';
+
 
 const colors =  {
-    wait: "orange",
-    accept: "green",
-    decline : "red"
+    waiting: "orange",
+    validate: "green",
+    canceled: 'red',
 }
 
 LocaleConfig.locales['fr'] = {
@@ -34,30 +34,66 @@ LocaleConfig.locales['fr'] = {
 };
 LocaleConfig.defaultLocale = 'fr';
 
-const CalendarsList = () => {
 
-    const handleAlert = (day) => {
-        return Alert.alert(
-      "Alert Title",
-      "My Alert Msg",
-      [
-        {
-          text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
-          style: "cancel"
-        },
-        { text: "OK", onPress: () => console.log("OK Pressed", day) }
-      ],
-      { cancelable: false }
-    );
+
+const CalendarsList = () => {
+    const [dates, setDates] = useState({
+      '2021-03-21': {
+        color: 'red',
+        textColor: 'white',
+      },
+      '2021-03-22': { color: 'red', textColor: 'white' },
+      '2021-03-23': {
+        color: 'red',
+        textColor: 'white',
+      },
+      '2021-03-24': { color: 'red', textColor: 'white' },
+      '2021-03-25': {
+        color: 'red',
+        textColor: 'white',
+      },
+    });
+  
+
+  const selectDate = (day) => {
+    if (dates[day.dateString]) {
+      return Alert.alert(
+        'Alert Title',
+        'Voulez annuler cette demande',
+        [
+          {
+            text: 'Cancel',
+            onPress: () => console.log('Cancel Pressed'),
+            style: 'cancel',
+          },
+          {
+            text: 'OK',
+            onPress: () => {
+              const newDates = { ...dates };
+              delete newDates[day.dateString];
+              console.log(newDates)
+              setDates(newDates);
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    }else{
+        const toto = {...dates}
+        toto[day.dateString] = { color: 'orange', textColor: 'white' }
+        setDates(toto)
     }
-        
+  };
     
   return (
-    <CalendarList
-      current={'2021-03-09'}
-      onDayPress={(day) => {handleAlert(day)}}
+    <View>
+    <CalendarList 
+      markingType={'period'}
+      onDayPress={(day) => {
+        selectDate(day);
+      }}
       firstDay={1}
+      markedDates={dates}
       pastScrollRange={10}
       futureScrollRange={24}
       renderHeader={date => {
@@ -106,6 +142,11 @@ const CalendarsList = () => {
         }
       }}
     />
+      <View style={{flex:3 , flexDirection:'column-reverse', left:10, top:10}} >
+          <AntDesign name="pluscircle" size={60} color="deepskyblue" onPress={() => selectDate(day)}/>
+
+      </View>
+    </View>
   );
 };
 
