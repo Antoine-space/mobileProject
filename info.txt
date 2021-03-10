@@ -1,0 +1,12 @@
+Faire  dossier Auth 
+Forgot et login
+
+Forgot 
+Button
+
+const [auth, setAuth] = Reaxt.useState(false)
+-> navigation 
+    -> AuthStackNavigation
+        AuthStack.Navigator 
+            AuthStack.Screen name= login .....
+
