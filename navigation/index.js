@@ -7,8 +7,8 @@ function RootNavigation() {
   return (
     
     <NavigationContainer>
-      <SafeAreaView style={{flex:1}}>
-        <BottomBarNav />
+      <SafeAreaView style={{ flex: 1 }}>
+        {user.token ? <BottomBarNav /> : <AuthStackNavigation />}
       </SafeAreaView>
     </NavigationContainer>
     

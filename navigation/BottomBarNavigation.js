@@ -62,17 +62,23 @@ function BottomBarNav() {
           ),
         }}
       />
-      <Tab.Screen
-        name='HR'
-        component={HRTopBarNavigation}
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <IconWrapper focused={focused} color={color}>
-              <Ionicons name='ios-globe' size={32} color={color} />
-            </IconWrapper>
-          ),
-        }}
-      />
+      {user.service === 'rh' ? (
+        <Tab.Screen
+          name='HR'
+          component={HRTopBarNavigation}
+          options={{
+            tabBarIcon: ({ color, focused }) => (
+              <IconWrapper focused={focused} color={color}>
+                <Ionicons
+                  name='ios-globe'
+                  size={32}
+                  color={color}
+                />
+              </IconWrapper>
+            ),
+          }}
+        />
+      ) : null}
       <Tab.Screen
         name='Account'
         component={AccountScreen}
