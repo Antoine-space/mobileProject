@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, {useContext} from 'react';
 import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,10 +7,12 @@ import ActusScreen from '../screens/common/Actus';
 import CalendarScreen from '../screens/salaries/Calendar';
 import AccountScreen from '../screens/salaries/Account';
 import HRTopBarNavigation from "./HR/HRTopBarNavigation"
+import {AuthContext} from '../context/AuthContext'
 
 const Tab = createBottomTabNavigator();
 
 const IconWrapper = ({ color, children, focused }) => {
+  
   return (
     <>
       <View
@@ -29,6 +31,7 @@ const IconWrapper = ({ color, children, focused }) => {
 };
 
 function BottomBarNav() {
+  const {user} = useContext(AuthContext);
   return (
     <Tab.Navigator
       tabBarOptions={{

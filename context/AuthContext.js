@@ -4,7 +4,7 @@ import jwt_decode from 'jwt-decode';
 
 export const AuthContext = createContext();
 
-const AuthContextProvier = ({ children }) => {
+const AuthContextProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(
     (prevState, action) => {
       switch (action.type) {
@@ -45,6 +45,7 @@ const AuthContextProvier = ({ children }) => {
         userToken = await AsyncStorage.getItem('token');
         if (userToken !== null) {
           var decoded = jwt_decode(userToken);
+          console.log(userToken);
           dispatch({
             type: 'RESTORE_TOKEN',
             token: userToken,
@@ -64,7 +65,7 @@ const AuthContextProvier = ({ children }) => {
   const signIn = async (data) => {
     try {
       const resp = await fetch(
-        `http://172.20.104.179:3000/api/auth/login`,
+        `http://192.168.0.14:3000/api/auth/login`,
         {
           method: 'POST',
           headers: {
@@ -86,6 +87,7 @@ const AuthContextProvier = ({ children }) => {
 
       await AsyncStorage.setItem('token', respJSON.token);
       var decoded = jwt_decode(respJSON.token);
+      console.log(respJSON)
       dispatch({
         type: 'SIGN_IN',
         token: respJSON.token,
@@ -115,4 +117,4 @@ const AuthContextProvier = ({ children }) => {
   );
 };
 
-export default AuthContextProvier;
+export default AuthContextProvider;

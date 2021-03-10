@@ -10,8 +10,8 @@ import { AuthContext } from '../../context/AuthContext';
 
 const Login = ({ navigation }) => {
   const { signIn } = useContext(AuthContext);
-  const [email, setEmail] = useState('toto@toto.com');
-  const [pwd, setPWD] = useState('Azerty51@');
+  const [email, setEmail] = useState('antoineernest@free.fr');
+  const [pwd, setPWD] = useState('1258ZAea');
 
   const submit = () => {
       let data = {
