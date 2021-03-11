@@ -65,7 +65,7 @@ const AuthContextProvider = ({ children }) => {
   const signIn = async (data) => {
     try {
       const resp = await fetch(
-        `http://192.168.0.14:3000/api/auth/login`,
+        `http://${process.env.IP_PC}:3000/api/auth/login`,
         {
           method: 'POST',
           headers: {
