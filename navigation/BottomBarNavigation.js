@@ -65,7 +65,7 @@ function BottomBarNav() {
           ),
         }}
       />
-      {user.service === 'rh' ? (
+      {user.salary.service.name === 'rh' ? (
         <Tab.Screen
           name='HR'
           component={HRTopBarNavigation}

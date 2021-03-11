@@ -2,6 +2,7 @@ import React, { useEffect, createContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import jwt_decode from 'jwt-decode';
 
+
 export const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
@@ -12,29 +13,25 @@ const AuthContextProvider = ({ children }) => {
           return {
             ...prevState,
             token: action.token,
-            service: action.service,
-            id: action.id,
+            salary: action.salary
           };
         case 'SIGN_IN':
           return {
             ...prevState,
             token: action.token,
-            service: action.service,
-            id: action.id,
+            salary: action.salary
           };
         case 'SIGN_OUT':
           return {
             ...prevState,
             token: null,
-            service: null,
-            id: null,
+            salary : null
           };
       }
     },
     {
       token: null,
-      service: null,
-      id: null,
+      salary:null,
     }
   );
 
@@ -44,16 +41,30 @@ const AuthContextProvider = ({ children }) => {
       try {
         userToken = await AsyncStorage.getItem('token');
         if (userToken !== null) {
-          var decoded = jwt_decode(userToken);
-          console.log(userToken);
+          const resp = await fetch(
+            `http://192.168.0.14:3000/api/salaries/me`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization:`Bearer ${userToken}`,
+              },
+            }
+          );
+  
+          if (!resp.ok) {
+            throw new Error("Unthaurize")
+          }
+  
+          const respJSON = await resp.json();
           dispatch({
             type: 'RESTORE_TOKEN',
             token: userToken,
-            service: decoded.service,
-            id: decoded.user_id,
+            salary: respJSON
           });
         }
       } catch (e) {
+        signOut()
         console.log(e);
       }
     };
@@ -65,7 +76,11 @@ const AuthContextProvider = ({ children }) => {
   const signIn = async (data) => {
     try {
       const resp = await fetch(
+<<<<<<< HEAD
         `http://192.168.1.21:3000/api/auth/login`,
+=======
+        `http://192.168.0.14:3000/api/auth/login`,
+>>>>>>> e9c7f1893fc59b782a22cded69843ffa57e19e1b
         {
           method: 'POST',
           headers: {
@@ -86,13 +101,11 @@ const AuthContextProvider = ({ children }) => {
       }
 
       await AsyncStorage.setItem('token', respJSON.token);
-      var decoded = jwt_decode(respJSON.token);
       console.log(respJSON)
       dispatch({
         type: 'SIGN_IN',
         token: respJSON.token,
-        service: decoded.service,
-        id: decoded.user_id,
+        salary: respJSON.salary
       });
     } catch (error) {
       console.log('error', error);
@@ -107,7 +120,7 @@ const AuthContextProvider = ({ children }) => {
   return (
     <AuthContext.Provider
       value={{
-        user: state,
+        user : state,
         signIn: signIn,
         signOut: signOut
       }}
