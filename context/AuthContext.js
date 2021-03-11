@@ -76,11 +76,7 @@ const AuthContextProvider = ({ children }) => {
   const signIn = async (data) => {
     try {
       const resp = await fetch(
-<<<<<<< HEAD
-        `http://192.168.1.21:3000/api/auth/login`,
-=======
         `http://192.168.0.14:3000/api/auth/login`,
->>>>>>> e9c7f1893fc59b782a22cded69843ffa57e19e1b
         {
           method: 'POST',
           headers: {
