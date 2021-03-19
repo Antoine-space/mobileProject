@@ -17,12 +17,17 @@ import {Text, View, Alert, Button} from 'react-native';
 import {CalendarList} from 'react-native-calendars';
 import {LocaleConfig} from 'react-native-calendars';
 import { Ionicons, AntDesign  } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { color } from 'react-native-reanimated';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+
 
 
 const colors =  {
-    waiting: "orange",
-    validate: "green",
-    canceled: 'red',
+    pending: "orange",
+    accepted: "green",
+    refused: 'red',
+    date_accepted: 'yellow'
 }
 
 LocaleConfig.locales['fr'] = {
@@ -35,6 +40,40 @@ LocaleConfig.locales['fr'] = {
 LocaleConfig.defaultLocale = 'fr';
 
 
+const getDates = async () => {
+  let userToken;
+  try {
+    userToken = await AsyncStorage.getItem('token');
+    const resp = await fetch(
+      `http://192.168.0.14:3000/api/conges`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+      }
+    );
+   
+    if (!resp.ok) {
+      throw new Error("Unthaurize")
+    }
+
+    const respJSON = await resp.json();
+    var myObject = {};
+    respJSON.map(element => {
+      myObject += {
+        [element.startDate] : { color : colors[element.state], textColor : "White"},
+      };
+    });
+    console.log(myObject);
+    return myObject;
+
+  } 
+  catch (error) {
+    console.log(error);
+  }
+}
 
 const CalendarsList = () => {
     const [dates, setDates] = useState({
@@ -71,6 +110,7 @@ const CalendarsList = () => {
             onPress: () => {
               const newDates = { ...dates };
               delete newDates[day.dateString];
+              getDates();
               console.log(newDates)
               setDates(newDates);
             },
