@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import {
+  ImageBackground,
   StyleSheet,
   Text,
   View,
@@ -7,6 +8,7 @@ import {
   TextInput,
 } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
+const image = { uri: "../../assets/3348020.png" };
 
 const Login = ({ navigation }) => {
   const { signIn } = useContext(AuthContext);
@@ -22,35 +24,42 @@ const Login = ({ navigation }) => {
   }
 
   return (
-    <View style={{ flex: 1, marginHorizontal: 30 }}>
-      <Text
-        style={{
-          marginBottom: 50,
-          fontSize: 20,
-          textAlign: 'center',
-        }}
-      >
-        Login
-      </Text>
-      <Text>Email</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={(txt) => setEmail(txt)}
-        value={email}
-        keyboardType={'email-address'}
-      />
-      <Text>Password</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={(txt) => setPWD(txt)}
-        value={pwd}
-        secureTextEntry={true}
-      />
-      <Button
-        title='mdp oublié'
-        onPress={() => navigation.navigate('Forgot')}
-      ></Button>
-      <Button title='login' onPress={submit}></Button>
+    <View style={{ flex: 1, marginHorizontal: 30, flexDirection: "column"}}>
+      <ImageBackground source={image} style={styles.image}>
+        <Text
+          style={{
+            marginBottom: 50,
+            fontSize: 20,
+            textAlign: 'center',
+          }}
+        >
+          
+          Login
+        </Text>
+        <Text>Email</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={(txt) => setEmail(txt)}
+          value={email}
+          keyboardType={'email-address'}
+        />
+        <Text>Mot de passe</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={(txt) => setPWD(txt)}
+          value={pwd}
+          secureTextEntry={true}
+        />
+        <View style={styles.Button}>
+          <Button
+            title='mdp oublié'
+            onPress={() => navigation.navigate('Forgot')}
+          ></Button>
+        </View>
+        <View>
+        <Button title='login' onPress={submit}></Button>
+        </View>
+      </ImageBackground>
     </View>
   );
 };
@@ -66,4 +75,14 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
     marginVertical: 5,
   },
+  image: {
+    flex: 1,
+    resizeMode: "cover",
+    justifyContent: "center"
+  },
+  button: {
+    flex:3,
+    marginBottom : 10,
+    padding: 10,
+  }
 });
