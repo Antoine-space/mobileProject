@@ -13,13 +13,14 @@
 
 // const styles = StyleSheet.create({})
 import React, { useCallback, useState } from 'react';
-import {Text, View, Alert, Button} from 'react-native';
+import {Text, View, Alert, Button, Pressable, Modal, StyleSheet} from 'react-native';
 import {CalendarList} from 'react-native-calendars';
 import {LocaleConfig} from 'react-native-calendars';
 import { Ionicons, AntDesign  } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { color } from 'react-native-reanimated';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import moment from 'moment';
 
 
 
@@ -60,15 +61,18 @@ const getDates = async () => {
     }
 
     const respJSON = await resp.json();
-    var myObject = {};
+    var myObject;
+    var date;
     respJSON.map(element => {
-      myObject += {
-        [element.startDate] : { color : colors[element.state], textColor : "White"},
-      };
+      date = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
+      if(!myObject)
+      {
+        myObject =  ` {"${date}" : { color : "${colors[element.state]}", textColor : "white"}, `  ;
+      }
+      myObject += ` "${date}" : { color : "${colors[element.state]}", textColor : "white"},` ;
     });
-    console.log(myObject);
+    myObject += "}"; 
     return myObject;
-
   } 
   catch (error) {
     console.log(error);
@@ -76,28 +80,16 @@ const getDates = async () => {
 }
 
 const CalendarsList = () => {
-    const [dates, setDates] = useState({
-      '2021-03-21': {
-        color: 'red',
-        textColor: 'white',
-      },
-      '2021-03-22': { color: 'red', textColor: 'white' },
-      '2021-03-23': {
-        color: 'red',
-        textColor: 'white',
-      },
-      '2021-03-24': { color: 'red', textColor: 'white' },
-      '2021-03-25': {
-        color: 'red',
-        textColor: 'white',
-      },
-    });
+    const [modalVisible, setModalVisible] = useState(false);
+    const [dates, setDates] = useState(
+      {}
+    );
   
 
   const selectDate = (day) => {
     if (dates[day.dateString]) {
       return Alert.alert(
-        'Alert Title',
+        'Annuler congé',
         'Voulez annuler cette demande',
         [
           {
@@ -110,7 +102,6 @@ const CalendarsList = () => {
             onPress: () => {
               const newDates = { ...dates };
               delete newDates[day.dateString];
-              getDates();
               console.log(newDates)
               setDates(newDates);
             },
@@ -124,6 +115,80 @@ const CalendarsList = () => {
         setDates(toto)
     }
   };
+
+  //veut afficher les congés séléctionner dans le modal
+  const printCongés = () => {
+    const text =  `${dates}`; 
+    return text
+  }
+
+  const acceptCongés = (day)  => {
+      setModalVisible(!modalVisible)
+      if (!dates[day.dateString]) {
+        return Alert.alert(
+          'Impossible ',
+          "Impossible d'envoyer votre demande, rien n'est séléctionner",
+          [
+            {
+              text: 'Annuler',
+              onPress: () => console.log('Cancel Pressed'),
+              style: 'cancel',
+            },
+            {
+              text: 'OK',
+              onPress: () => {
+                const newDates = { ...dates };
+                delete newDates[day.dateString];
+                console.log(newDates)
+                setDates(newDates);
+              },
+            },
+          ],
+          { cancelable: false }
+        );
+      }
+      else{
+        congés(day)
+    }
+  }
+
+  //Envoi les congés 
+  const congés = async (day) => {
+    let userToken;
+    conges =
+      {
+        "salary" : "6025541e7e6d1c53202b60a0",
+        "ask_at": "2021-02-10",
+       "startDate": "2021-04-18T08:00:00Z",
+       "endDate": "2021-04-20T12:00:00Z",
+       "comment": "",
+       "state": "pending",
+       "validator": {
+         "firstname": "Etoiles",
+        "lastname": "Dupont",
+         "date": "2021-02-12"
+       }
+     };
+    try {
+      userToken = await AsyncStorage.getItem('token');
+      const resp = await fetch(
+        `http://192.168.0.14:3000/api/conges`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body : conges
+        }
+      );
+    
+    }
+    catch(error){
+      console.log(error);
+    }
+  }
+  
     
   return (
     <View>
@@ -182,12 +247,90 @@ const CalendarsList = () => {
         }
       }}
     />
-      <View style={{flex:3 , flexDirection:'column-reverse', left:10, top:10}} >
-          <AntDesign name="pluscircle" size={60} color="deepskyblue" onPress={() => selectDate(day)}/>
-
+    <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert("Modal has been closed.");
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+              <Text style={styles.modalText,{}}>Confirmer mes congés</Text>
+              <Text style={styles.modalText} >{printCongés()}</Text>
+              <View style={{flexDirection: 'row'}}>
+                  <Pressable
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => setModalVisible(!modalVisible)}
+                  >
+                    <Text style={styles.textStyle}>Annuler</Text>
+                  </Pressable>              
+                  <Pressable
+                    style={[styles.button, styles.buttonAccept]}
+                    onPress={() => pushCongés()}
+                  >
+                    <Text style={styles.textStyle} >Accepter</Text>
+                  </Pressable>  
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <View
+        style={{flex:3 , flexDirection:'column-reverse', left:10, top:10}}
+      >
+          <AntDesign name="pluscircle" size={60} color="deepskyblue" onPress={() => setModalVisible(true)}/>
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2
+  },
+  buttonOpen: {
+    backgroundColor: "#F194FF",
+  },
+  buttonClose: {
+    backgroundColor: "#2196F3",
+  },
+  buttonAccept: {
+    backgroundColor: "#2196F3",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center"
+  }
+});
 
 export default CalendarsList;
