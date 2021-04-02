@@ -43,46 +43,72 @@ LocaleConfig.defaultLocale = 'fr';
 
 const getDates = async () => {
   let userToken;
-  try {
-    userToken = await AsyncStorage.getItem('token');
-    const resp = await fetch(
-      `http://192.168.0.14:3000/api/conges`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userToken}`
-        },
-      }
-    );
-   
-    if (!resp.ok) {
-      throw new Error("Unthaurize")
-    }
+  
 
-    const respJSON = await resp.json();
-    var myObject;
-    var date;
-    respJSON.map(element => {
-      date = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
-      if(!myObject)
-      {
-        myObject =  ` {"${date}" : { color : "${colors[element.state]}", textColor : "white"}, `  ;
-      }
-      myObject += ` "${date}" : { color : "${colors[element.state]}", textColor : "white"},` ;
-    });
-    myObject += "}"; 
-    return myObject;
-  } 
-  catch (error) {
-    console.log(error);
-  }
+    userToken = await AsyncStorage.getItem('token');
+    var myHeaders = new Headers();
+    myHeaders.append("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjA0MjAzNzc5ZWIyNDk0YTRjYjgxY2U1Iiwic2VydmljZSI6InJoIiwiaWF0IjoxNjE1NDY5NzgzLCJleHAiOjE2MTU0NzMzODN9.7hjB-5ZGXWGSkLkesXF38u2tyaQea8ZPSpQf8UZR2EE");
+    
+    var requestOptions = {
+      method: 'GET',
+      headers: myHeaders,
+      redirect: 'follow'
+    };
+    
+    fetch("http://192.168.0.14:3000/api/conges", requestOptions)
+    .then(response => response.json())
+    .then(respJSON =>  {
+        var myObject = {};
+        var date;
+        respJSON.map(element => {
+          date = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
+          myObject[date] = { color : colors[element.state], textColor : "white"}
+        });
+        console.log(myObject);
+        return myObject;
+      } )
+    .catch(error => console.log('error', error));
+
+  // try {
+  //   
+  //   const resp = await fetch(
+  //     `http://192.168.0.14:3000/api/conges`,
+  //     {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${userToken}`
+  //       },
+  //     }
+  //   );
+   
+  //   if (!resp.ok) {
+  //     throw new Error("Unthaurize")
+  //   }
+  //   console.log(resp)
+  //   const respJSON = await resp.json();
+  //   var myObject;
+  //   var date;
+  //   respJSON.map(element => {
+  //     date = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
+  //     if(!myObject)
+  //     {
+  //       myObject =  ` {"${date}" : { color : "${colors[element.state]}", textColor : "white"}, `  ;
+  //     }
+  //     myObject += ` "${date}" : { color : "${colors[element.state]}", textColor : "white"},` ;
+  //   });
+  //   myObject += "}"; 
+  //   return myObject;
+  // } 
+  // catch (error) {
+  //   console.log(error);
+  // }
 }
 
 const CalendarsList = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [dates, setDates] = useState(
-      {}
+        async () => await getDates()
     );
   
 
@@ -110,6 +136,7 @@ const CalendarsList = () => {
         { cancelable: false }
       );
     }else{
+      console.log(dates);
         const toto = {...dates}
         toto[day.dateString] = { color: 'orange', textColor: 'white' }
         setDates(toto)
@@ -122,6 +149,7 @@ const CalendarsList = () => {
     return text
   }
 
+  //
   const acceptCongés = (day)  => {
       setModalVisible(!modalVisible)
       if (!dates[day.dateString]) {

@@ -29,7 +29,7 @@ const Login = ({ navigation }) => {
     <View style={styles.viewAll} >
       <ImageBackground source={image} style={styles.image}>
       <View style={styles.viewLogin} >
-      <Image source={{ uri: '/info/mobileProject/assets/logoFonce.png' }}  style = {{ height: 100, width: 100 }} />
+      <Image source={{ uri: 'https://i.ibb.co/6D59f9P/logo-Fonce.png' }}  style = {{ height: 100, width: 100 }} />
         
           <Text
             style={{
