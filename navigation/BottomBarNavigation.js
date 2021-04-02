@@ -40,13 +40,13 @@ function BottomBarNav() {
       }}
     >
       <Tab.Screen
-        name='Home'
+        name='Acceuil'
         component={ActusScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
             <IconWrapper focused={focused} color={color}>
               <Ionicons
-                name='md-home'
+                name='planet-outline'
                 size={32}
                 color={color}
               />
@@ -55,7 +55,7 @@ function BottomBarNav() {
         }}
       />
       <Tab.Screen
-        name='Calendar'
+        name='Calendrier'
         component={CalendarScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
@@ -67,13 +67,13 @@ function BottomBarNav() {
       />
       {user.salary.service.name === 'rh' ? (
         <Tab.Screen
-          name='HR'
+          name='RH'
           component={HRTopBarNavigation}
           options={{
             tabBarIcon: ({ color, focused }) => (
               <IconWrapper focused={focused} color={color}>
                 <Ionicons
-                  name='ios-globe'
+                  name="people-circle-outline"
                   size={32}
                   color={color}
                 />
@@ -83,7 +83,7 @@ function BottomBarNav() {
         />
       ) : null}
       <Tab.Screen
-        name='Account'
+        name='Compte'
         component={AccountScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (

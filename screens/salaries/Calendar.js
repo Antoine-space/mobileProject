@@ -12,7 +12,7 @@
 // export default Calendar
 
 // const styles = StyleSheet.create({})
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {Text, View, Alert, Button, Pressable, Modal, StyleSheet} from 'react-native';
 import {CalendarList} from 'react-native-calendars';
 import {LocaleConfig} from 'react-native-calendars';
@@ -26,7 +26,7 @@ import moment from 'moment';
 
 const colors =  {
     pending: "orange",
-    accepted: "green",
+    accepted: "limegreen",
     refused: 'red',
     date_accepted: 'yellow'
 }
@@ -41,75 +41,77 @@ LocaleConfig.locales['fr'] = {
 LocaleConfig.defaultLocale = 'fr';
 
 
-const getDates = async () => {
-  let userToken;
-  
 
-    userToken = await AsyncStorage.getItem('token');
-    var myHeaders = new Headers();
-    myHeaders.append("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjA0MjAzNzc5ZWIyNDk0YTRjYjgxY2U1Iiwic2VydmljZSI6InJoIiwiaWF0IjoxNjE1NDY5NzgzLCJleHAiOjE2MTU0NzMzODN9.7hjB-5ZGXWGSkLkesXF38u2tyaQea8ZPSpQf8UZR2EE");
-    
-    var requestOptions = {
-      method: 'GET',
-      headers: myHeaders,
-      redirect: 'follow'
-    };
-    
-    fetch("http://192.168.0.14:3000/api/conges", requestOptions)
-    .then(response => response.json())
-    .then(respJSON =>  {
-        var myObject = {};
-        var date;
-        respJSON.map(element => {
-          date = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
-          myObject[date] = { color : colors[element.state], textColor : "white"}
-        });
-        console.log(myObject);
-        return myObject;
-      } )
-    .catch(error => console.log('error', error));
-
-  // try {
-  //   
-  //   const resp = await fetch(
-  //     `http://192.168.0.14:3000/api/conges`,
-  //     {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${userToken}`
-  //       },
-  //     }
-  //   );
-   
-  //   if (!resp.ok) {
-  //     throw new Error("Unthaurize")
-  //   }
-  //   console.log(resp)
-  //   const respJSON = await resp.json();
-  //   var myObject;
-  //   var date;
-  //   respJSON.map(element => {
-  //     date = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
-  //     if(!myObject)
-  //     {
-  //       myObject =  ` {"${date}" : { color : "${colors[element.state]}", textColor : "white"}, `  ;
-  //     }
-  //     myObject += ` "${date}" : { color : "${colors[element.state]}", textColor : "white"},` ;
-  //   });
-  //   myObject += "}"; 
-  //   return myObject;
-  // } 
-  // catch (error) {
-  //   console.log(error);
-  // }
-}
 
 const CalendarsList = () => {
     const [modalVisible, setModalVisible] = useState(false);
-    const [dates, setDates] = useState(
-        async () => await getDates()
-    );
+    const [dates, setDates] = useState(null);
+    const [datesSelected, setDatesSelected] = useState(null);
+
+
+    var betweenDates = function(startDate, endDate) {
+      var dateslist = [],
+          currentDate = startDate,
+          addDays = function(days) {
+            var date = new Date(this.valueOf());
+            date.setDate(date.getDate() + days);
+            date = moment(date).format("YYYY-MM-DD")
+            return date;
+          };
+      while (currentDate <= endDate) {
+        dateslist.push(currentDate);
+        currentDate = addDays.call(currentDate, 1);
+      }
+      return dateslist;
+    };
+    
+    //recupere les dates utilisateurs
+    const getDates = async () => {
+      let userToken;
+        userToken = await AsyncStorage.getItem('token');
+        var myHeaders = new Headers();
+        myHeaders.append("Authorization", `Bearer ${userToken}`);
+        
+        var requestOptions = {
+          method: 'GET',
+          headers: myHeaders,
+          redirect: 'follow'
+        };
+        fetch("http://192.168.0.14:3000/api/conges", requestOptions)
+        .then(response => response.json())
+        .then(respJSON =>  {
+            var myObject = {};
+            var dateStart;
+            var dateEnd;
+            var between;
+            respJSON.map((element) => {
+              dateStart = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
+              dateEnd = moment(`${[element.endDate]}`).format("YYYY-MM-DD")
+              between = betweenDates(dateStart,dateEnd)
+              between.map((date, index) => {
+                if(index == 0)
+                {
+                  myObject[date] = {startingDay: true, color : colors[element.state], textColor : "white"}
+                }
+                else if(index == between.length-1)
+                {
+                  myObject[date] = {endingDay: true, color : colors[element.state], textColor : "white"}
+                }
+                else{
+                  myObject[date] = { color : colors[element.state], textColor : "white"}
+                }
+              });
+
+            });
+            setDates(myObject)
+          } )
+        .catch(error => console.log('error', error));
+    
+    }
+
+    useEffect(() => {
+      getDates()
+    }, [])
   
 
   const selectDate = (day) => {
@@ -128,31 +130,37 @@ const CalendarsList = () => {
             onPress: () => {
               const newDates = { ...dates };
               delete newDates[day.dateString];
-              console.log(newDates)
               setDates(newDates);
+              const newDatesSelect = { ...datesSelected };
+              delete newDatesSelect[day.dateString];
+              setDatesSelected(newDatesSelect);
             },
           },
         ],
         { cancelable: false }
       );
     }else{
-      console.log(dates);
         const toto = {...dates}
-        toto[day.dateString] = { color: 'orange', textColor: 'white' }
+        toto[day.dateString] = { color: 'darkgray', textColor: 'white' }
         setDates(toto)
+
+        const tata = {...datesSelected}
+        tata[day.dateString] = { color: 'darkgray', textColor: 'white' }
+        setDatesSelected(tata)
     }
   };
 
   //veut afficher les congés séléctionner dans le modal
   const printCongés = () => {
-    const text =  `${dates}`; 
-    return text
+    console.log('-----------')
+    var i = 0;
+    
+    console.log('-----------')
   }
 
-  //
-  const acceptCongés = (day)  => {
-      setModalVisible(!modalVisible)
-      if (!dates[day.dateString]) {
+  //Si des congés sélectionner je les ajotue dans la base
+  const acceptCongés = async  ()  => {
+      if (!datesSelected) {
         return Alert.alert(
           'Impossible ',
           "Impossible d'envoyer votre demande, rien n'est séléctionner",
@@ -165,10 +173,7 @@ const CalendarsList = () => {
             {
               text: 'OK',
               onPress: () => {
-                const newDates = { ...dates };
-                delete newDates[day.dateString];
-                console.log(newDates)
-                setDates(newDates);
+                setModalVisible(!modalVisible)
               },
             },
           ],
@@ -176,48 +181,61 @@ const CalendarsList = () => {
         );
       }
       else{
-        congés(day)
+        let userToken;
+        console.log(Date.now())
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = today.getFullYear();
+        today = mm + '/' + dd + '/' + yyyy; 
+        var i = 0;
+        var firstDate;
+        var lastDate;
+        for(const element in datesSelected) {
+          if(i == 0){
+            firstDate = element 
+          }
+          else if(i == element.length-1){
+            lastDate = element
+          }
+          i += 1
+        };
+        let conges =
+          {
+            "salary" : "6025541e7e6d1c53202b60a0",
+            "ask_at": today,
+            "startDate": firstDate,
+            "endDate": lastDate,
+            "comment": "",
+            "state": "pending",
+        };
+        console.log(conges)
+        // try {
+        //   userToken = await AsyncStorage.getItem('token');
+        //   const resp = await fetch(
+        //     `http://192.168.0.14:3000/api/conges`,
+        //     {
+        //       method: 'POST',
+        //       headers: {
+        //         'Content-Type': 'application/json',
+        //         'Authorization': `Bearer ${userToken}`
+        //       },
+        //       body : JSON.stringify(conges)
+        //     }
+        //   )
+        //   const respJSON = resp.status
+        //   console.log(respJSON);
+
+
+        // console.log("requete envoyé")
+        // }
+        // catch(error){
+        //   console.log(error);
+        // }
     }
   }
 
-  //Envoi les congés 
-  const congés = async (day) => {
-    let userToken;
-    conges =
-      {
-        "salary" : "6025541e7e6d1c53202b60a0",
-        "ask_at": "2021-02-10",
-       "startDate": "2021-04-18T08:00:00Z",
-       "endDate": "2021-04-20T12:00:00Z",
-       "comment": "",
-       "state": "pending",
-       "validator": {
-         "firstname": "Etoiles",
-        "lastname": "Dupont",
-         "date": "2021-02-12"
-       }
-     };
-    try {
-      userToken = await AsyncStorage.getItem('token');
-      const resp = await fetch(
-        `http://192.168.0.14:3000/api/conges`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body : conges
-        }
-      );
-    
-    }
-    catch(error){
-      console.log(error);
-    }
-  }
-  
-    
+   
   return (
     <View>
     <CalendarList 
@@ -226,7 +244,7 @@ const CalendarsList = () => {
         selectDate(day);
       }}
       firstDay={1}
-      markedDates={dates}
+      markedDates={{...dates}}
       pastScrollRange={10}
       futureScrollRange={24}
       renderHeader={date => {
@@ -297,9 +315,9 @@ const CalendarsList = () => {
                   </Pressable>              
                   <Pressable
                     style={[styles.button, styles.buttonAccept]}
-                    onPress={() => pushCongés()}
+                    onPress={() => acceptCongés()}
                   >
-                    <Text style={styles.textStyle} >Accepter</Text>
+                    <Text style={styles.textStyle}  >Accepter</Text>
                   </Pressable>  
             </View>
           </View>
@@ -308,7 +326,10 @@ const CalendarsList = () => {
       <View
         style={{flex:3 , flexDirection:'column-reverse', left:10, top:10}}
       >
-          <AntDesign name="pluscircle" size={60} color="deepskyblue" onPress={() => setModalVisible(true)}/>
+        <Ionicons
+        name="add-circle" size={75} color="slateblue" onPress={() => setModalVisible(true)}
+        />
+
       </View>
     </View>
   );

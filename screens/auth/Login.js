@@ -37,7 +37,7 @@ const Login = ({ navigation }) => {
               marginBottom: 50,
               fontSize: 20,
               textAlign: 'center',
-              fontFamily:"SFUIDisplay-Semibold"
+
             }}
           >
             Login
