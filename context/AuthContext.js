@@ -42,7 +42,7 @@ const AuthContextProvider = ({ children }) => {
         userToken = await AsyncStorage.getItem('token');
         if (userToken !== null) {
           const resp = await fetch(
-            `http://192.168.0.14:3000/api/salaries/me`,
+            `http://192.168.0.6:3000/api/salaries/me`,
             {
               method: 'GET',
               headers: {
@@ -76,7 +76,7 @@ const AuthContextProvider = ({ children }) => {
   const signIn = async (data) => {
     try {
       const resp = await fetch(
-        `http://192.168.0.14:3000/api/auth/login`,
+        `http://192.168.0.6:3000/api/auth/login`,
         {
           method: 'POST',
           headers: {

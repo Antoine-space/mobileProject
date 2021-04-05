@@ -6,7 +6,8 @@ import {
   View,
   Button,
   TextInput,
-  Image
+  Image,
+  StatusBar
 } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 const image = { uri: "https://i.ibb.co/NYpJHMZ/3348020.png" };
@@ -28,6 +29,8 @@ const Login = ({ navigation }) => {
     
     <View style={styles.viewAll} >
       <ImageBackground source={image} style={styles.image}>
+      <StatusBar
+        animated={true} />
         <View style={styles.logoContainer}>
           <Image source={{ uri: 'https://i.ibb.co/6D59f9P/logo-Fonce.png' }}  style = {styles.logo} />
         </View>
@@ -37,10 +40,11 @@ const Login = ({ navigation }) => {
               marginBottom: 50,
               fontSize: 20,
               textAlign: 'center',
-
+              fontFamily: 'notoserif',
+              fontWeight: 'bold'
             }}
           >
-            Login
+            Identification
           </Text>
           <Text>Email</Text>
           <TextInput
@@ -76,7 +80,7 @@ export default Login;
 const styles = StyleSheet.create({
   viewAll :{
     flex: 1, 
-    justifyContent: "center"
+    justifyContent: "center",
   },
   input: {
     backgroundColor:"white",
@@ -90,7 +94,7 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
-    resizeMode: "cover",
+    
   },
   button: {
     marginBottom : 1,

@@ -13,7 +13,7 @@
 
 // const styles = StyleSheet.create({})
 import React, { useCallback, useEffect, useState } from 'react';
-import {Text, View, Alert, Button, Pressable, Modal, StyleSheet} from 'react-native';
+import {Text, View, Alert, Button, Pressable, Modal, StyleSheet, RefreshControl} from 'react-native';
 import {CalendarList} from 'react-native-calendars';
 import {LocaleConfig} from 'react-native-calendars';
 import { Ionicons, AntDesign  } from '@expo/vector-icons';
@@ -41,12 +41,21 @@ LocaleConfig.locales['fr'] = {
 LocaleConfig.defaultLocale = 'fr';
 
 
-
+const wait = (timeout) => {
+  return new Promise(resolve => setTimeout(resolve, timeout));
+}
 
 const CalendarsList = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [dates, setDates] = useState(null);
     const [datesSelected, setDatesSelected] = useState(null);
+
+    const [refreshing, setRefreshing] = React.useState(false);
+
+    const onRefresh = React.useCallback(() => {
+      setRefreshing(true);
+      wait(2000).then(() => setRefreshing(false));
+    }, []);
 
 
     var betweenDates = function(startDate, endDate) {
@@ -77,7 +86,7 @@ const CalendarsList = () => {
           headers: myHeaders,
           redirect: 'follow'
         };
-        fetch("http://192.168.0.14:3000/api/conges", requestOptions)
+        fetch("http://192.168.0.6:3000/api/conges", requestOptions)
         .then(response => response.json())
         .then(respJSON =>  {
             var myObject = {};
@@ -151,12 +160,11 @@ const CalendarsList = () => {
   };
 
   //veut afficher les congés séléctionner dans le modal
-  const printCongés = () => {
-    console.log('-----------')
-    var i = 0;
-    
-    console.log('-----------')
-  }
+  // const printCongés = () => {
+  //   console.log('-----------')
+  //   var i = 0;
+  //   console.log('-----------')
+  // }
 
   //Si des congés sélectionner je les ajotue dans la base
   const acceptCongés = async  ()  => {
@@ -187,19 +195,22 @@ const CalendarsList = () => {
         var dd = String(today.getDate()).padStart(2, '0');
         var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
         var yyyy = today.getFullYear();
-        today = mm + '/' + dd + '/' + yyyy; 
+        today = mm + '-' + dd + '-' + yyyy; 
         var i = 0;
         var firstDate;
         var lastDate;
+        
+        
         for(const element in datesSelected) {
+          var taille = (element.length-1)
           if(i == 0){
             firstDate = element 
           }
-          else if(i == element.length-1){
+          else if(i = taille){
             lastDate = element
           }
           i += 1
-        };
+        }
         let conges =
           {
             "salary" : "6025541e7e6d1c53202b60a0",
@@ -209,29 +220,27 @@ const CalendarsList = () => {
             "comment": "",
             "state": "pending",
         };
-        console.log(conges)
-        // try {
-        //   userToken = await AsyncStorage.getItem('token');
-        //   const resp = await fetch(
-        //     `http://192.168.0.14:3000/api/conges`,
-        //     {
-        //       method: 'POST',
-        //       headers: {
-        //         'Content-Type': 'application/json',
-        //         'Authorization': `Bearer ${userToken}`
-        //       },
-        //       body : JSON.stringify(conges)
-        //     }
-        //   )
-        //   const respJSON = resp.status
-        //   console.log(respJSON);
-
-
-        // console.log("requete envoyé")
-        // }
-        // catch(error){
-        //   console.log(error);
-        // }
+        try {
+          userToken = await AsyncStorage.getItem('token');
+          const resp = await fetch(
+            `http://192.168.0.6:3000/api/conges`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userToken}`
+              },
+              body : JSON.stringify(conges)
+            }
+          )
+          const respJSON = resp.status
+          console.log(respJSON);
+          console.log("requete envoyé")
+          this.forceRemount
+        }
+        catch(error){
+          console.log(error);
+        }
     }
   }
 
@@ -258,6 +267,7 @@ const CalendarsList = () => {
           color: '#5E60CE',
           paddingRight: 5
         };
+
 
         return (
           <View
@@ -305,7 +315,7 @@ const CalendarsList = () => {
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
               <Text style={styles.modalText,{}}>Confirmer mes congés</Text>
-              <Text style={styles.modalText} >{printCongés()}</Text>
+              <Text style={styles.modalText} >{}</Text>
               <View style={{flexDirection: 'row'}}>
                   <Pressable
                     style={[styles.button, styles.buttonClose]}
