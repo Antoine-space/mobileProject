@@ -1,19 +1,5 @@
-// import React from 'react'
-// import { StyleSheet, Text, View } from 'react-native'
-
-// const Calendar = () => {
-//     return (
-//         <View>
-//             <Text>Calendar</Text>
-//         </View>
-//     )
-// }
-
-// export default Calendar
-
-// const styles = StyleSheet.create({})
-import React, { useCallback, useEffect, useState } from 'react';
-import {Text, View, Alert, Button, Pressable, Modal, StyleSheet, RefreshControl} from 'react-native';
+import React, { useCallback, useEffect, useState,useContext } from 'react';
+import {Text, View, Alert, Button, Pressable, Modal, StyleSheet, RefreshControl } from 'react-native';
 import {CalendarList} from 'react-native-calendars';
 import {LocaleConfig} from 'react-native-calendars';
 import { Ionicons, AntDesign  } from '@expo/vector-icons';
@@ -21,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { color } from 'react-native-reanimated';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import moment from 'moment';
+import { AuthContext } from '../../context/AuthContext';
+
 
 
 
@@ -41,6 +29,7 @@ LocaleConfig.locales['fr'] = {
 LocaleConfig.defaultLocale = 'fr';
 
 
+
 const wait = (timeout) => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 }
@@ -49,13 +38,7 @@ const CalendarsList = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [dates, setDates] = useState(null);
     const [datesSelected, setDatesSelected] = useState(null);
-
-    const [refreshing, setRefreshing] = React.useState(false);
-
-    const onRefresh = React.useCallback(() => {
-      setRefreshing(true);
-      wait(2000).then(() => setRefreshing(false));
-    }, []);
+    const { user } = useContext(AuthContext);
 
 
     var betweenDates = function(startDate, endDate) {
@@ -76,46 +59,51 @@ const CalendarsList = () => {
     
     //recupere les dates utilisateurs
     const getDates = async () => {
-      let userToken;
+        let userToken;
         userToken = await AsyncStorage.getItem('token');
         var myHeaders = new Headers();
+        let salary
+        salary = user.salary._id
+        console.log(salary)
         myHeaders.append("Authorization", `Bearer ${userToken}`);
-        
         var requestOptions = {
           method: 'GET',
           headers: myHeaders,
           redirect: 'follow'
         };
-        fetch("http://192.168.0.6:3000/api/conges", requestOptions)
+        fetch(`http://192.168.0.6:3000/api/conges/salary/${salary}`, requestOptions)
         .then(response => response.json())
         .then(respJSON =>  {
             var myObject = {};
             var dateStart;
             var dateEnd;
             var between;
-            respJSON.map((element) => {
-              dateStart = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
-              dateEnd = moment(`${[element.endDate]}`).format("YYYY-MM-DD")
-              between = betweenDates(dateStart,dateEnd)
-              between.map((date, index) => {
-                if(index == 0)
-                {
-                  myObject[date] = {startingDay: true, color : colors[element.state], textColor : "white"}
-                }
-                else if(index == between.length-1)
-                {
-                  myObject[date] = {endingDay: true, color : colors[element.state], textColor : "white"}
-                }
-                else{
-                  myObject[date] = { color : colors[element.state], textColor : "white"}
-                }
+            if(respJSON != [])
+            {
+                respJSON.map((element) => {
+                dateStart = moment(`${[element.startDate]}`).format("YYYY-MM-DD")
+                dateEnd = moment(`${[element.endDate]}`).format("YYYY-MM-DD")
+                between = betweenDates(dateStart,dateEnd)
+                between.map((date, index) => {
+                  if(index == 0)
+                  {
+                    myObject[date] = {_id:element._id ,startingDay: true, color : colors[element.state], textColor : "white"}
+                  }
+                  else if(index == between.length-1)
+                  {
+                    myObject[date] = {_id:element._id, endingDay: true, color : colors[element.state], textColor : "white"}
+                  }
+                  else{
+                    myObject[date] = {_id:element._id,  color : colors[element.state], textColor : "white"}
+                  }
+                });
               });
-
-            });
-            setDates(myObject)
+              setDates(myObject)
+              setDatesSelected(null);
+            }
+            else console.log('aucun congé') 
           } )
         .catch(error => console.log('error', error));
-    
     }
 
     useEffect(() => {
@@ -123,7 +111,8 @@ const CalendarsList = () => {
     }, [])
   
 
-  const selectDate = (day) => {
+  const selectDate = async (day) => {
+    
     if (dates[day.dateString]) {
       return Alert.alert(
         'Annuler congé',
@@ -136,13 +125,33 @@ const CalendarsList = () => {
           },
           {
             text: 'OK',
-            onPress: () => {
+            onPress: async () => {
+              let color
+              color = dates[day.dateString].color
+              
               const newDates = { ...dates };
               delete newDates[day.dateString];
               setDates(newDates);
+
+              
               const newDatesSelect = { ...datesSelected };
               delete newDatesSelect[day.dateString];
               setDatesSelected(newDatesSelect);
+              
+              let userToken
+              userToken = await AsyncStorage.getItem('token');
+              console.log('id congé : ', dates[day.dateString]._id)
+              fetch(
+                `http://192.168.0.6:3000/api/conges/${dates[day.dateString]._id}`,
+                {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                  }
+                }
+              )
+                getDates();
             },
           },
         ],
@@ -155,6 +164,7 @@ const CalendarsList = () => {
 
         const tata = {...datesSelected}
         tata[day.dateString] = { color: 'darkgray', textColor: 'white' }
+        console.log(datesSelected)
         setDatesSelected(tata)
     }
   };
@@ -168,6 +178,7 @@ const CalendarsList = () => {
 
   //Si des congés sélectionner je les ajotue dans la base
   const acceptCongés = async  ()  => {
+      
       if (!datesSelected) {
         return Alert.alert(
           'Impossible ',
@@ -190,7 +201,6 @@ const CalendarsList = () => {
       }
       else{
         let userToken;
-        console.log(Date.now())
         var today = new Date();
         var dd = String(today.getDate()).padStart(2, '0');
         var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
@@ -200,7 +210,8 @@ const CalendarsList = () => {
         var firstDate;
         var lastDate;
         
-        
+        var jour;
+        var jour1;
         for(const element in datesSelected) {
           var taille = (element.length-1)
           if(i == 0){
@@ -209,11 +220,19 @@ const CalendarsList = () => {
           else if(i = taille){
             lastDate = element
           }
+          
+          jour1 = element.substr(8, 2)+1
+          if( jour != jour1 && i != taille && i != 0)
+          {
+            congésPasSuite()
+          }
+          jour = element.substr(8, 2)
+
           i += 1
         }
         let conges =
           {
-            "salary" : "6025541e7e6d1c53202b60a0",
+            "salary" : user.salary._id,
             "ask_at": today,
             "startDate": firstDate,
             "endDate": lastDate,
@@ -236,7 +255,8 @@ const CalendarsList = () => {
           const respJSON = resp.status
           console.log(respJSON);
           console.log("requete envoyé")
-          this.forceRemount
+          getDates();
+          setModalVisible(!modalVisible)
         }
         catch(error){
           console.log(error);
@@ -244,6 +264,23 @@ const CalendarsList = () => {
     }
   }
 
+  const congésPasSuite = async () => {
+
+    return Alert.alert(
+      'Annuler congé',
+      'Impossible la plage horraire séléctionné ne se suit pas',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+      ],
+      { cancelable: false }
+    );
+
+  }
+  
    
   return (
     <View>
