@@ -12,7 +12,7 @@ const Account = () => {
     const loadUsers = async () => {
       try {
         const resp = await fetch(
-          `http://192.168.0.6:3000/api/salaries`,
+          `http://192.168.0.14:3000/api/salaries`,
           {
             method: 'GET',
             headers: {

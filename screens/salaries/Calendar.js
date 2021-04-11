@@ -71,7 +71,7 @@ const CalendarsList = () => {
           headers: myHeaders,
           redirect: 'follow'
         };
-        fetch(`http://192.168.0.6:3000/api/conges/salary/${salary}`, requestOptions)
+        fetch(`http://192.168.0.14:3000/api/conges/salary/${salary}`, requestOptions)
         .then(response => response.json())
         .then(respJSON =>  {
             var myObject = {};
@@ -142,7 +142,7 @@ const CalendarsList = () => {
               userToken = await AsyncStorage.getItem('token');
               console.log('id congé : ', dates[day.dateString]._id)
               fetch(
-                `http://192.168.0.6:3000/api/conges/${dates[day.dateString]._id}`,
+                `http://192.168.0.14:3000/api/conges/${dates[day.dateString]._id}`,
                 {
                   method: 'DELETE',
                   headers: {
@@ -169,6 +169,22 @@ const CalendarsList = () => {
     }
   };
 
+  const congesPasSuite = async () => {
+
+    return Alert.alert(
+      'Annuler congé',
+      'Impossible la plage horraire séléctionné ne se suit pas',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+      ],
+      { cancelable: false }
+    );
+
+  }
   //veut afficher les congés séléctionner dans le modal
   // const printCongés = () => {
   //   console.log('-----------')
@@ -182,7 +198,7 @@ const CalendarsList = () => {
       if (!datesSelected) {
         return Alert.alert(
           'Impossible ',
-          "Impossible d'envoyer votre demande, rien n'est séléctionner",
+          "Impossible d'envoyer votre demande, aucune date n'est séléctionnée",
           [
             {
               text: 'Annuler',
@@ -209,7 +225,7 @@ const CalendarsList = () => {
         var i = 0;
         var firstDate;
         var lastDate;
-        
+        var congésPasSuite = 0;
         var jour;
         var jour1;
         for(const element in datesSelected) {
@@ -221,13 +237,13 @@ const CalendarsList = () => {
             lastDate = element
           }
           
-          jour1 = element.substr(8, 2)+1
-          if( jour != jour1 && i != taille && i != 0)
+          jour1 =parseInt(element.substr(8, 2))
+          console.log(jour1)
+          if( jour == jour1  && i != 0)
           {
-            congésPasSuite()
+            var congésPasSuite = 1;
           }
-          jour = element.substr(8, 2)
-
+          jour = parseInt(element.substr(8, 2))+1
           i += 1
         }
         let conges =
@@ -240,23 +256,28 @@ const CalendarsList = () => {
             "state": "pending",
         };
         try {
-          userToken = await AsyncStorage.getItem('token');
-          const resp = await fetch(
-            `http://192.168.0.6:3000/api/conges`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${userToken}`
-              },
-              body : JSON.stringify(conges)
-            }
-          )
-          const respJSON = resp.status
-          console.log(respJSON);
-          console.log("requete envoyé")
-          getDates();
-          setModalVisible(!modalVisible)
+          if( congésPasSuite == 1)
+          {
+            userToken = await AsyncStorage.getItem('token');
+            const resp = await fetch(
+              `http://192.168.0.14:3000/api/conges`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${userToken}`
+                },
+                body : JSON.stringify(conges)
+              }
+            )
+            const respJSON = resp.status
+            console.log(respJSON);
+            console.log("requete envoyé")
+            getDates();
+            setModalVisible(!modalVisible)
+          }
+          else
+          {congesPasSuite()} 
         }
         catch(error){
           console.log(error);
@@ -264,22 +285,7 @@ const CalendarsList = () => {
     }
   }
 
-  const congésPasSuite = async () => {
 
-    return Alert.alert(
-      'Annuler congé',
-      'Impossible la plage horraire séléctionné ne se suit pas',
-      [
-        {
-          text: 'Cancel',
-          onPress: () => console.log('Cancel Pressed'),
-          style: 'cancel',
-        },
-      ],
-      { cancelable: false }
-    );
-
-  }
   
    
   return (
